@@ -1,0 +1,25 @@
+{
+  "name": "trading-card-service",
+  "version": "1.0.0",
+  "description": "This is a blank project for CDK development with TypeScript.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mallett002/trading-card-service.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mallett002/trading-card-service/issues"
+  },
+  "homepage": "https://github.com/mallett002/trading-card-service#readme",
+  "dependencies": {
+    "express": "4.18.2"
+  }
+}
