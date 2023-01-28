@@ -1,14 +1,10 @@
-# Welcome to your CDK TypeScript project
+# trading-card-service
 
-This is a blank project for CDK development with TypeScript.
+#### Description
+This is a simple node api deployed to AWS Fargate
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-## Useful commands
-
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+#### Running inside of docker
+- Run `docker build . -t <username>/trading-card-service` to build the image
+- Run `docker images` to see your newly built image
+- Run `docker run -p 3000:3000 -d <username>/trading-card-service` to run the container from the built image
+- Exec into container: `docker exec -it <container-hash> sh`
