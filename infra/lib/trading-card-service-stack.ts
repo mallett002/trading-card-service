@@ -8,19 +8,23 @@ export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // todo: create new vpc
-    const vpc = new ec2.Vpc(this, 'TradingCardVPC', {
-      subnetConfiguration: {
 
-      }
-    })
+    const vpc = new ec2.Vpc(this, 'TradingCardServiceVPC', {
+      subnetConfiguration: [
+        {
+          cidrMask: 24,
+          name: 'ingress',
+          subnetType: ec2.SubnetType.PUBLIC,
+        }
+      ]
+    });
 
     const dbSecret = new rds.DatabaseSecret(this, 'AuroraSecret', {
       username: 'clusteradmin',
     });
 
-    new cdk.CfnOutput(this, 'Secret Name', { value: dbSecret.secretName }); 
-    new cdk.CfnOutput(this, 'Secret ARN', { value: dbSecret.secretArn }); 
+    new cdk.CfnOutput(this, 'Secret Name', { value: dbSecret.secretName });
+    new cdk.CfnOutput(this, 'Secret ARN', { value: dbSecret.secretArn });
     new cdk.CfnOutput(this, 'Secret Full ARN', { value: dbSecret.secretFullArn || '' });
 
     // Create string parameter provide other AWS services with credentials to connect to RDS:
@@ -34,13 +38,14 @@ export class TradingCardServiceStack extends cdk.Stack {
 
     const cluster = new rds.ServerlessCluster(this, 'AuroraCluster', {
       // securityGroups: [defaultSecurityGroup],
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       parameterGroup: rds.ParameterGroup.fromParameterGroupName(this, 'ParameterGroup', 'default.aurora-postgresql10'),
       enableDataApi: true,
       engine: rds.DatabaseClusterEngine.AURORA_POSTGRESQL,
       vpc,
       credentials: rds.Credentials.fromSecret(dbSecret),
-      clusterIdentifier: 'trading-card-cluster',
-      defaultDatabaseName: 'trading-card-db',
+      // clusterIdentifier: 'trading-card-cluster',
+      // defaultDatabaseName: 'trading-card-db',
     });
 
   }
