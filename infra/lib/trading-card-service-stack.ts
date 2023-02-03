@@ -42,11 +42,13 @@ export class TradingCardServiceStack extends cdk.Stack {
       parameterGroup: rds.ParameterGroup.fromParameterGroupName(this, 'ParameterGroup', 'default.aurora-postgresql10'),
       enableDataApi: true,
       engine: rds.DatabaseClusterEngine.AURORA_POSTGRESQL,
+      
       vpc,
       credentials: rds.Credentials.fromSecret(dbSecret),
-      // clusterIdentifier: 'trading-card-cluster',
-      // defaultDatabaseName: 'trading-card-db',
+      defaultDatabaseName: 'TradingCardDb',
     });
+
+    new cdk.CfnOutput(this, 'Cluster ARN', { value: cluster.clusterArn });
 
   }
 }

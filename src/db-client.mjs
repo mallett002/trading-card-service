@@ -1,20 +1,51 @@
-import pg from 'pg';
+import {
+    SecretsManagerClient,
+    GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import DataApiClient from 'data-api-client';
 
-const { Client } = pg;
+
 
 let client;
+
+async function getDbSecret() {
+    const secretName = "";
+    const secretsClient = new SecretsManagerClient({
+      region: "us-east-1",
+    });
+    
+    let response;
+    
+    try {
+      response = await secretsClient.send(
+        new GetSecretValueCommand({ SecretId: secretName })
+      );
+    } catch (error) {
+      // For a list of exceptions thrown, see
+      // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+      throw error;
+    }
+    
+    return response.SecretString;
+}
+
 
 const getPgClient = async () => {
     if (!client) {
         try {
-            client = new Client({
-                host: 'mydbhost',
-                port: 5432,
-                user: 'postgres',
-                password: 'password',
+            console.log("About to connect to db...")
+            client = DataApiClient({
+                secretArn: '',
+                resourceArn: '',
+                database: 'TradingCardDb',
+                region: 'us-east-1',
+                engine: 'pg'
             });
+            console.log({client});;
 
-            await client.connect();
+            let result = await client.query(`SELECT * FROM company`);
+
+            console.log(result.records[0]);
         } catch (err) {
             console.log('Error connecting to database: ', err);
         }
