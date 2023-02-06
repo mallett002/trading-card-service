@@ -19,11 +19,14 @@ const createCard = async (req, res) => {
         FIRST                   CHAR(20)
     );
     */
+    const payload = req.body;
+
+    console.log({req});
 
     let result = null;
 
     try {
-        result = await client.query(`INSERT INTO CARD VALUES (2, 'Baseball', 2014, 'Topps Co.', 'Topps Heritage Minors', '2014 Topps Heritage Minors', 174, null, 'Judge', 'Aaron') RETURNING ID`);
+        result = await client.query(createCardInsert(payload));
 
         console.log(result.records[0]);
     } catch (error) {
