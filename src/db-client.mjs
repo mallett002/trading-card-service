@@ -30,22 +30,16 @@ async function getDbSecret() {
 }
 
 
-const getPgClient = async () => {
+const getPgClient = () => {
     if (!client) {
         try {
-            console.log("About to connect to db...")
             client = DataApiClient({
-                secretArn: '',
-                resourceArn: '',
+                secretArn: 'arn:aws:secretsmanager:us-east-1:175849613020:secret:AuroraSecret41E6E877-wZjBSDz5ERRz-3Zp8HK',
+                resourceArn: 'arn:aws:rds:us-east-1:175849613020:cluster:tradingcardservicestack-auroracluster23d869c0-anxbud5kj4ij',
                 database: 'TradingCardDb',
                 region: 'us-east-1',
                 engine: 'pg'
             });
-            console.log({client});;
-
-            let result = await client.query(`SELECT * FROM company`);
-
-            console.log(result.records[0]);
         } catch (err) {
             console.log('Error connecting to database: ', err);
         }
