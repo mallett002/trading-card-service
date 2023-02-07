@@ -2,7 +2,7 @@ import getPgClient from '../db-client.mjs';
 import { createCardInsert } from '../../queries.js';
 
 const createCard = async (req, res) => {
-    const client = await getPgClient();
+    const client = getPgClient();
 
     /*
     CREATE TABLE CARD (
@@ -17,8 +17,6 @@ const createCard = async (req, res) => {
 
     try {
         result = await client.query(createCardInsert(req.body));
-
-        console.log(result.records[0]);
     } catch (error) {
         console.log('Error creating card ', error);
     }
