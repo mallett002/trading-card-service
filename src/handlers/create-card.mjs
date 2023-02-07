@@ -7,10 +7,10 @@ const createCard = async (req, res) => {
     /*
     CREATE TABLE CARD (
         ID                      SERIAL PRIMARY KEY,
-        BRAND                   CHAR(50) NOT NULL,
+        BRAND                   VARCHAR(50) NOT NULL,
         CARD_NUMBER             INT,
-        LAST                    CHAR(20),
-        FIRST                   CHAR(20)
+        LAST                    VARCHAR(20),
+        FIRST                   VARCHAR(20)
     );
     */
     let result = null;

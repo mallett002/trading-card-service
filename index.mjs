@@ -10,7 +10,7 @@ app.use(express.json());
 const port = 3000;
 
 app.post('/card', createCard);
-app.get('/card', getCard);
+app.get('/card/:id', getCard);
 app.get('/cards', getCards);
 
 
