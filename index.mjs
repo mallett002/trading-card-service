@@ -6,6 +6,7 @@ import createCard from './src/handlers/create-card.mjs';
 // Todo: connect to db: https://node-postgres.com/
 
 const app = express();
+app.use(express.json());
 const port = 3000;
 
 app.post('/card', createCard);
