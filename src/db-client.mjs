@@ -34,8 +34,8 @@ const getPgClient = () => {
     if (!client) {
         try {
             client = DataApiClient({
-                secretArn: 'arn:aws:secretsmanager:us-east-1:175849613020:secret:AuroraSecret41E6E877-O4uly7c461i2-e3HFzn',
-                resourceArn: 'arn:aws:rds:us-east-1:175849613020:cluster:tradingcardservicestack-auroracluster23d869c0-fghsreuvc6nr',
+                secretArn: 'arn:aws:secretsmanager:us-east-1:175849613020:secret:AuroraSecret41E6E877-GHXmTs0hpov6-vmWF2m',
+                resourceArn: 'arn:aws:rds:us-east-1:175849613020:cluster:tradingcardservicestack-auroracluster23d869c0-zuw6k7lcemk7',
                 database: 'TradingCardDb',
                 region: 'us-east-1',
                 engine: 'pg'
