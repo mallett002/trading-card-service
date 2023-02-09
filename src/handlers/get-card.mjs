@@ -17,7 +17,7 @@ const getCard = async (req, res) => {
         }
 
     } catch (error) {
-        console.log('Error creating card ', error);
+        console.log('Error querying card ', error);
     }
     
     return res.status(200).send(result.records[0]);

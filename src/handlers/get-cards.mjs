@@ -51,7 +51,7 @@ const getCards = async (req, res) => {
 
         return res.status(200).json({ cards: result.records });
     } catch (error) {
-        console.log('Error creating card ', error);
+        console.log('Error querying cards ', error);
     }
 };
 

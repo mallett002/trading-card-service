@@ -3,8 +3,8 @@
 #### Description
 This is a simple node api deployed to AWS Fargate
 
-#### Running inside of docker
-- Run `docker build . -t <username>/trading-card-service` to build the image
-- Run `docker images` to see your newly built image
-- Run `docker run -p 3000:3000 -d <username>/trading-card-service` to run the container from the built image
-- Exec into container: `docker exec -it <container-hash> sh`
+#### Running locally inside of docker
+- Create a .env file with your `AWS_ACCESS_KEY_ID` & `AWS_SECRET_ACCESS_KEY` values so docker can read them
+- Run `npm run docker:start` to build and start the app
+- Run `npm run docker:stop` to stop the container and remove it
+- Exec into container: `docker exec -it <container-hash> sh` (Can get the hash from running `docker ps`)

@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "docker:build": "docker build . -t mallett002/trading-card-service",
-    "docker:start": "docker run -p 3000:3000 -d mallett002/trading-card-service",
-    "docker:rm": "docker image rm mallett002/trading-card-service",
+    "docker:start": "docker compose up -d",
+    "docker:stop": "docker compose down",
+    "docker:rm": "docker image rm trading-card-service:latest",
     "start": "node index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -8,3 +8,4 @@ infra/.cdk.staging
 infra/cdk.out
 
 node_modules
+.env
