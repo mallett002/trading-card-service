@@ -6,10 +6,11 @@ import createCard from './src/handlers/create-card.mjs';
 const app = express();
 const port = 3000;
 
-app.post('/card', createCard);
-app.get('/card', getCard);
-app.get('/cards', getCards);
+app.use(express.json());
 
+app.post('/card', createCard);
+app.get('/card/:id', getCard);
+app.get('/cards', getCards);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
