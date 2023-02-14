@@ -73,9 +73,9 @@ export class TradingCardServiceStack extends cdk.Stack {
             // from secretsManager for db creds
         // },
         environment: {
-          secretArn: dbSecret.secretArn,
-          dbClusterArn: dbcluster.clusterArn,
-          dbName: DATABASE_NAME,
+          SECRET_ARN: dbSecret.secretArn,
+          CLUSTER_ARN: dbcluster.clusterArn,
+          DATABASE_NAME: DATABASE_NAME,
         }
       },
       taskSubnets: {

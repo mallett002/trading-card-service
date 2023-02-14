@@ -19,7 +19,7 @@ const getPgClient = () => {
             client = DataApiClient({
                 secretArn: process.env.SECRET_ARN || '',
                 resourceArn: process.env.CLUSTER_ARN || '',
-                database: 'TradingCardDb',
+                database: process.env.DATABASE_NAME || '',
                 region: 'us-east-1',
                 engine: 'pg'
             });
