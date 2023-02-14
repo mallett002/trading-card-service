@@ -1,53 +1,89 @@
 import * as cdk from 'aws-cdk-lib';
+import * as path from 'path';
 import { Construct } from 'constructs';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import { DockerImageAsset, NetworkMode } from 'aws-cdk-lib/aws-ecr-assets';
 
 export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
 
+    // Todo: make private subnets. Private isolated for db & private w/ egress for fargate?
     const vpc = new ec2.Vpc(this, 'TradingCardServiceVPC', {
       subnetConfiguration: [
         {
           cidrMask: 24,
           name: 'ingress',
-          subnetType: ec2.SubnetType.PUBLIC,
+          subnetType: ec2.SubnetType.PUBLIC
         }
       ]
     });
 
+    // Database: ----------------------------------------------------------------------------------------------
     const dbSecret = new rds.DatabaseSecret(this, 'AuroraSecret', {
       username: 'clusteradmin',
     });
+    const DATABASE_NAME = 'TradingCardDb';
 
     new cdk.CfnOutput(this, 'Secret Name', { value: dbSecret.secretName });
     new cdk.CfnOutput(this, 'Secret ARN', { value: dbSecret.secretArn });
     new cdk.CfnOutput(this, 'Secret Full ARN', { value: dbSecret.secretFullArn || '' });
 
-    // Create string parameter provide other AWS services with credentials to connect to RDS:
-    // const credentialsArn = new ssm.StringParameter(this, 'DBCredentialsArn', {
-    //   parameterName: 'db-secret-credentials-arn',
-    //   stringValue: dbSecret.secretArn,
-    // });
-
-    // get the default security group
-    // const defaultSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, "SG", 'sg-fe621cf5');
-
-    const cluster = new rds.ServerlessCluster(this, 'AuroraCluster', {
-      // securityGroups: [defaultSecurityGroup],
+    const dbcluster = new rds.ServerlessCluster(this, 'AuroraCluster', {
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       parameterGroup: rds.ParameterGroup.fromParameterGroupName(this, 'ParameterGroup', 'default.aurora-postgresql10'),
       enableDataApi: true,
       engine: rds.DatabaseClusterEngine.AURORA_POSTGRESQL,
       vpc,
       credentials: rds.Credentials.fromSecret(dbSecret),
-      defaultDatabaseName: 'TradingCardDb',
+      defaultDatabaseName: DATABASE_NAME,
     });
 
-    new cdk.CfnOutput(this, 'Cluster ARN', { value: cluster.clusterArn });
+    new cdk.CfnOutput(this, 'Cluster ARN', { value: dbcluster.clusterArn });
 
+    // Docker image uploaded to ECR ---------------------------------------------------------------------------
+    const imageAsset = new DockerImageAsset(this, 'TradingCardServiceImageAsset', {
+      directory: '../',
+      // networkMode: NetworkMode.HOST,
+    });
+
+    // Fargate with load balancer: ----------------------------------------------------------------------------
+    const ecsCluster = new ecs.Cluster(this, 'TradingCardServiceEcsCluster', {
+      clusterName: 'trading-card-cluster',
+      containerInsights: true,
+      vpc,
+    });
+
+    const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
+      cluster: ecsCluster,
+      desiredCount: 2,
+      taskImageOptions: {
+        image: ecs.ContainerImage.fromDockerImageAsset(imageAsset),
+        containerPort: 3000,
+        logDriver: ecs.LogDrivers.awsLogs({
+          streamPrefix: id,
+          logRetention: logs.RetentionDays.ONE_WEEK,
+        }),
+        // secrets: {
+            // from secretsManager for db creds
+        // },
+        environment: {
+          secretArn: dbSecret.secretArn,
+          dbClusterArn: dbcluster.clusterArn,
+          dbName: DATABASE_NAME,
+        }
+      },
+      taskSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC // private with egress? or public?
+      },
+      loadBalancerName: 'trading-service-lb',
+    });
+
+//    dbcluster.grantDataApiAccess(loadBalancedFargateService.taskDefinition.taskRole);
   }
 }
