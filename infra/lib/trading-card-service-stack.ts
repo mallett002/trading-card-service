@@ -71,7 +71,7 @@ export class TradingCardServiceStack extends cdk.Stack {
       // securityGroups: [],
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset('../'),
-        containerPort: 80,
+        containerPort: 3000,
         enableLogging: true,
         logDriver: ecs.LogDrivers.awsLogs({
           streamPrefix: id,
