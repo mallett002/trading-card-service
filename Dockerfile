@@ -1,4 +1,4 @@
-FROM node:18.1.0-alpine
+FROM --platform=linux/amd64 node:18.1.0-alpine
 
 WORKDIR /usr/src/app
 
@@ -8,6 +8,6 @@ RUN npm ci --only=production
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 80
 
 CMD [ "node", "index.mjs" ]

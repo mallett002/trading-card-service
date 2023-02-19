@@ -7,6 +7,7 @@ import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { DockerImageAsset, NetworkMode } from 'aws-cdk-lib/aws-ecr-assets';
+import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 
 export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -15,13 +16,25 @@ export class TradingCardServiceStack extends cdk.Stack {
 
     // Todo: make private subnets. Private isolated for db & private w/ egress for fargate?
     const vpc = new ec2.Vpc(this, 'TradingCardServiceVPC', {
+      // Subnets for each availiability zone:
       subnetConfiguration: [
-        {
-          cidrMask: 24,
-          name: 'ingress',
-          subnetType: ec2.SubnetType.PUBLIC
-        }
-      ]
+          {
+            cidrMask: 24,
+            name: 'ingress',
+            subnetType: ec2.SubnetType.PUBLIC,
+          },
+          {
+            cidrMask: 24,
+            name: 'application',
+            subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+          },
+          {
+            cidrMask: 28,
+            name: 'rds',
+            subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          }
+      ],
+      maxAzs: 2
     });
 
     // Database: ----------------------------------------------------------------------------------------------
@@ -48,8 +61,7 @@ export class TradingCardServiceStack extends cdk.Stack {
 
     // Docker image uploaded to ECR ---------------------------------------------------------------------------
     const imageAsset = new DockerImageAsset(this, 'TradingCardServiceImageAsset', {
-      directory: '../',
-      // networkMode: NetworkMode.HOST,
+      directory: '../'
     });
 
     // Fargate with load balancer: ----------------------------------------------------------------------------
@@ -62,28 +74,30 @@ export class TradingCardServiceStack extends cdk.Stack {
     const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
       cluster: ecsCluster,
       desiredCount: 2,
+      assignPublicIp: true,
       taskImageOptions: {
-        image: ecs.ContainerImage.fromDockerImageAsset(imageAsset),
-        containerPort: 3000,
+        image: ecs.ContainerImage.fromAsset('../'),
+        containerPort: 80,
+        enableLogging: true,
         logDriver: ecs.LogDrivers.awsLogs({
           streamPrefix: id,
           logRetention: logs.RetentionDays.ONE_WEEK,
         }),
-        // secrets: {
-            // from secretsManager for db creds
-        // },
+        secrets: {
+          "DB_SECRET": ecs.Secret.fromSecretsManager(sm.Secret.fromSecretCompleteArn(this, "ImportedSecret", dbSecret.secretArn))
+        },
         environment: {
           SECRET_ARN: dbSecret.secretArn,
           CLUSTER_ARN: dbcluster.clusterArn,
-          DATABASE_NAME: DATABASE_NAME,
+          DATABASE_NAME: DATABASE_NAME
         }
       },
-      taskSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC // private with egress? or public?
-      },
+      // taskSubnets: {
+      //   subnetType: ec2.SubnetType.PUBLIC // private with egress? or public?
+      // },
       loadBalancerName: 'trading-service-lb',
     });
 
-//    dbcluster.grantDataApiAccess(loadBalancedFargateService.taskDefinition.taskRole);
+    dbcluster.grantDataApiAccess(loadBalancedFargateService.taskDefinition.taskRole);
   }
 }

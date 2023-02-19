@@ -5,7 +5,7 @@ import getCard from './src/handlers/get-card.mjs';
 import createCard from './src/handlers/create-card.mjs';
 
 const app = express();
-const port = 3000;
+const port = 80;
 
 app.use(express.json());
 
