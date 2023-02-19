@@ -13,8 +13,6 @@ export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-
-    // Todo: make private subnets. Private isolated for db & private w/ egress for fargate?
     const vpc = new ec2.Vpc(this, 'TradingCardServiceVPC', {
       // Subnets for each availiability zone:
       subnetConfiguration: [
@@ -27,11 +25,6 @@ export class TradingCardServiceStack extends cdk.Stack {
             cidrMask: 24,
             name: 'application',
             subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-          },
-          {
-            cidrMask: 28,
-            name: 'rds',
-            subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
           }
       ],
       maxAzs: 2
@@ -48,7 +41,7 @@ export class TradingCardServiceStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'Secret Full ARN', { value: dbSecret.secretFullArn || '' });
 
     const dbcluster = new rds.ServerlessCluster(this, 'AuroraCluster', {
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       parameterGroup: rds.ParameterGroup.fromParameterGroupName(this, 'ParameterGroup', 'default.aurora-postgresql10'),
       enableDataApi: true,
       engine: rds.DatabaseClusterEngine.AURORA_POSTGRESQL,
@@ -75,6 +68,7 @@ export class TradingCardServiceStack extends cdk.Stack {
       cluster: ecsCluster,
       desiredCount: 2,
       assignPublicIp: true,
+      // securityGroups: [],
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset('../'),
         containerPort: 80,
@@ -83,21 +77,19 @@ export class TradingCardServiceStack extends cdk.Stack {
           streamPrefix: id,
           logRetention: logs.RetentionDays.ONE_WEEK,
         }),
-        secrets: {
-          "DB_SECRET": ecs.Secret.fromSecretsManager(sm.Secret.fromSecretCompleteArn(this, "ImportedSecret", dbSecret.secretArn))
-        },
         environment: {
           SECRET_ARN: dbSecret.secretArn,
           CLUSTER_ARN: dbcluster.clusterArn,
           DATABASE_NAME: DATABASE_NAME
         }
       },
-      // taskSubnets: {
-      //   subnetType: ec2.SubnetType.PUBLIC // private with egress? or public?
-      // },
+      taskSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC
+      },
       loadBalancerName: 'trading-service-lb',
     });
 
+    // Give Fargate tasks permission to access the database:
     dbcluster.grantDataApiAccess(loadBalancedFargateService.taskDefinition.taskRole);
   }
 }
