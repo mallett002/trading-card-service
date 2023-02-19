@@ -9,6 +9,12 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { DockerImageAsset, NetworkMode } from 'aws-cdk-lib/aws-ecr-assets';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 
+// Todo:
+//  - HTTPS
+//  - API Gateway?
+//  - db read replica in other AZ
+//  - Auto scaling groups for LB?
+
 export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
