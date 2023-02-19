@@ -53,7 +53,7 @@ export class TradingCardServiceStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'Cluster ARN', { value: dbcluster.clusterArn });
 
     // Docker image uploaded to ECR ---------------------------------------------------------------------------
-    const imageAsset = new DockerImageAsset(this, 'TradingCardServiceImageAsset', {
+    const dockerImage = new DockerImageAsset(this, 'TradingCardServiceImageAsset', {
       directory: '../'
     });
 
@@ -70,7 +70,7 @@ export class TradingCardServiceStack extends cdk.Stack {
       assignPublicIp: true,
       // securityGroups: [],
       taskImageOptions: {
-        image: ecs.ContainerImage.fromAsset('../'),
+        image: ecs.ContainerImage.fromDockerImageAsset(dockerImage),
         containerPort: 3000,
         enableLogging: true,
         logDriver: ecs.LogDrivers.awsLogs({
