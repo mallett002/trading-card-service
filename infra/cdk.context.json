@@ -12,5 +12,9 @@
     "us-east-1d",
     "us-east-1e",
     "us-east-1f"
-  ]
+  ],
+  "hosted-zone:account=175849613020:domainName=williamalanmallett.link:region=us-east-1": {
+    "Id": "/hostedzone/Z09418472DZ0C1M0L4OA8",
+    "Name": "williamalanmallett.link."
+  }
 }

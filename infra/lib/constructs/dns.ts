@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 
-export class Route53Construct extends Construct {
+export class DNSConstruct extends Construct {
   public readonly certificate: cdk.aws_certificatemanager.Certificate;
   public readonly hostedZone: route53.IHostedZone;
 

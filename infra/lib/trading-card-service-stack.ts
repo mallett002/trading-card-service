@@ -6,14 +6,16 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { DockerImageAsset, NetworkMode } from 'aws-cdk-lib/aws-ecr-assets';
-import * as sm from 'aws-cdk-lib/aws-secretsmanager';
+import * as Route53 from "aws-cdk-lib/aws-route53";
+import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
+import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
+import { DNSConstruct } from './constructs/dns';
 
 // Todo:
 //  - HTTPS
 //  - API Gateway?
 //  - db read replica in other AZ
-//  - Auto scaling groups for LB?
+//  - Auto scaling groups for LB? Can create a lb and apply it to the fargateservice
 
 export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -22,19 +24,21 @@ export class TradingCardServiceStack extends cdk.Stack {
     const vpc = new ec2.Vpc(this, 'TradingCardServiceVPC', {
       // Subnets for each availiability zone:
       subnetConfiguration: [
-          {
-            cidrMask: 24,
-            name: 'ingress',
-            subnetType: ec2.SubnetType.PUBLIC,
-          },
-          {
-            cidrMask: 24,
-            name: 'application',
-            subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-          }
+        {
+          cidrMask: 24,
+          name: 'ingress',
+          subnetType: ec2.SubnetType.PUBLIC,
+        },
+        {
+          cidrMask: 24,
+          name: 'application',
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        }
       ],
       maxAzs: 2
     });
+
+    const dns = new DNSConstruct(this, 'DNSConstruct');
 
     // Database: ----------------------------------------------------------------------------------------------
     const dbSecret = new rds.DatabaseSecret(this, 'AuroraSecret', {
@@ -71,6 +75,10 @@ export class TradingCardServiceStack extends cdk.Stack {
     });
 
     const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
+      // circuitBreaker: {
+      //   rollback: true,
+      // },
+      certificate: dns.certificate,
       cluster: ecsCluster,
       desiredCount: 2,
       assignPublicIp: true,
@@ -92,10 +100,18 @@ export class TradingCardServiceStack extends cdk.Stack {
       taskSubnets: {
         subnetType: ec2.SubnetType.PUBLIC
       },
+      // Todo: add logging to load balancer (they get sent to an s3 bucket, so have to create one of those too)
       loadBalancerName: 'trading-service-lb',
     });
 
     // Give Fargate tasks permission to access the database:
     dbcluster.grantDataApiAccess(loadBalancedFargateService.taskDefinition.taskRole);
+
+    new Route53.ARecord(this, 'AliasRecord', {
+      zone: dns.hostedZone,
+      target: Route53.RecordTarget.fromAlias(
+        new Route53Targets.LoadBalancerTarget(loadBalancedFargateService.loadBalancer),
+      ),
+    });
   }
 }
