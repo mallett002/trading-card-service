@@ -1,5 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import * as path from 'path';
 import { Construct } from 'constructs';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -8,14 +7,17 @@ import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as Route53 from "aws-cdk-lib/aws-route53";
 import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
+
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import { DNSConstruct } from './constructs/dns';
+import { ApplicationProtocol, SslPolicy } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 // Todo:
-//  - HTTPS
+//  - Add logging to the load balancer
+//  - Add cloudfront distribution?
+//  - Authentication
 //  - API Gateway?
 //  - db read replica in other AZ
-//  - Auto scaling groups for LB? Can create a lb and apply it to the fargateservice
 
 export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -75,14 +77,13 @@ export class TradingCardServiceStack extends cdk.Stack {
     });
 
     const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
-      // circuitBreaker: {
-      //   rollback: true,
-      // },
       certificate: dns.certificate,
+      domainZone: dns.hostedZone,
+      protocol: ApplicationProtocol.HTTPS,
+      sslPolicy: SslPolicy.TLS12,
       cluster: ecsCluster,
       desiredCount: 2,
       assignPublicIp: true,
-      // securityGroups: [],
       taskImageOptions: {
         image: ecs.ContainerImage.fromDockerImageAsset(dockerImage),
         containerPort: 3000,
@@ -100,13 +101,14 @@ export class TradingCardServiceStack extends cdk.Stack {
       taskSubnets: {
         subnetType: ec2.SubnetType.PUBLIC
       },
-      // Todo: add logging to load balancer (they get sent to an s3 bucket, so have to create one of those too)
       loadBalancerName: 'trading-service-lb',
     });
+
 
     // Give Fargate tasks permission to access the database:
     dbcluster.grantDataApiAccess(loadBalancedFargateService.taskDefinition.taskRole);
 
+    // Create ARecord that routes williamalanmallet.link to the load balancer
     new Route53.ARecord(this, 'AliasRecord', {
       zone: dns.hostedZone,
       target: Route53.RecordTarget.fromAlias(
