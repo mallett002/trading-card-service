@@ -80,7 +80,6 @@ export class TradingCardServiceStack extends cdk.Stack {
       certificate: dns.certificate,
       domainZone: dns.hostedZone,
       protocol: ApplicationProtocol.HTTPS,
-      sslPolicy: SslPolicy.TLS12,
       cluster: ecsCluster,
       desiredCount: 2,
       assignPublicIp: true,
