@@ -1,4 +1,4 @@
-FROM node:18.1.0-alpine
+FROM --platform=linux/amd64 node:18.1.0-alpine
 
 WORKDIR /usr/src/app
 

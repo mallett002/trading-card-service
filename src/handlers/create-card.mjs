@@ -4,15 +4,6 @@ import { createCardInsert } from '../../queries.js';
 const createCard = async (req, res) => {
     const client = getPgClient();
 
-    /*
-    CREATE TABLE CARD (
-        ID                      SERIAL PRIMARY KEY,
-        BRAND                   VARCHAR(50) NOT NULL,
-        CARD_NUMBER             INT,
-        LAST                    VARCHAR(20),
-        FIRST                   VARCHAR(20)
-    );
-    */
     let result = null;
 
     try {
