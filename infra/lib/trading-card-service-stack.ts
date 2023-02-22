@@ -10,7 +10,7 @@ import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
 
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import { DNSConstruct } from './constructs/dns';
-import { ApplicationProtocol, SslPolicy } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import { ApplicationProtocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 // Todo:
 //  - Add logging to the load balancer
