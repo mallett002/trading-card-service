@@ -14,10 +14,9 @@ import { ApplicationProtocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 // Todo:
 //  - Add logging to the load balancer
-//  - Add cloudfront distribution?
 //  - Authentication
+//  - WAF
 //  - API Gateway?
-//  - db read replica in other AZ
 
 export class TradingCardServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
