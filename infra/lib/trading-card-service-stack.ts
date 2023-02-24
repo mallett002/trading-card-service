@@ -14,6 +14,7 @@ import { ApplicationProtocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 
 // Todo:
 //  - migrations
+  // -create different stacks for network/data/app
 //  - Add logging to the load balancer
 //  - Authentication
 //  - WAF
