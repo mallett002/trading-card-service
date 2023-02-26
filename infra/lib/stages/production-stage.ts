@@ -10,16 +10,16 @@ export class ProductionStage extends cdk.Stage {
     constructor(scope: Construct, id: string, props?: cdk.StageProps) {
       super(scope, id, props);
 
-      const networkStack = new NetworkStack(this, 'Network', {
+      const networkStack = new NetworkStack(this, 'network', {
         env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
       });
 
-      const databaseStack = new DatabaseStack(this, 'Database', {
+      const databaseStack = new DatabaseStack(this, 'database', {
         vpc: networkStack.vpc,
         env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
       });
 
-      const applicationStack = new ApplicationStack(this, 'App', {
+      const applicationStack = new ApplicationStack(this, 'app', {
         vpc: networkStack.vpc,
         certificate: networkStack.certificate,
         hostedZone: networkStack.hostedZone,

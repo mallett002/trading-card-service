@@ -6,4 +6,4 @@ import {ProductionStage} from '../lib/stages/production-stage';
 
 const app = new cdk.App();
 
-new ProductionStage(app, 'ProductionStage');
+new ProductionStage(app, 'prod');
