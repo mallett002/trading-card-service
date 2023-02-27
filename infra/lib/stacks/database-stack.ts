@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { DbInitializer } from '../constructs/db-initializer';
 
 interface DatabaseStackProps extends cdk.StackProps {
     vpc: ec2.Vpc;
@@ -40,6 +41,16 @@ export class DatabaseStack extends cdk.Stack {
       this.clusterArn = this.dbCluster.clusterArn;
 
       new cdk.CfnOutput(this, 'Cluster ARN', { value: this.clusterArn });
+
+      const dbInitialization = new DbInitializer(this, 'RdsInitializer', {
+        vpc: props.vpc,
+        dbSecret: this.dbSecret,
+        databaseName: this.databaseName,
+        clusterArn: this.clusterArn
+      });
+
+      // Todo: Create the lambda code that will create the tables (./rds-initialization/index.js)
+
     }
 
     public grantDatabaseAccess(role: iam.IRole) {

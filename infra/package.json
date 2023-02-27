@@ -5,7 +5,8 @@
     "trading-card-service": "bin/trading-card-service.js"
   },
   "scripts": {
-    "deploy": "cdk deploy prod/network prod/database prod/app",
+    "deploy": "cdk deploy prod/network prod/database prod/app --require-approval never",
+    "destroy": "cdk destroy prod/network prod/database prod/app --require-approval never",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
