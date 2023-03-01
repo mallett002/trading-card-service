@@ -5,7 +5,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export interface DbInitializerProps {
     vpc: ec2.Vpc
@@ -19,6 +19,7 @@ export class DbInitializer extends Construct {
     public readonly response: string;
     public readonly customResource: AwsCustomResource;
     public readonly function: lambda.Function;
+    public readonly lambdaInitRole: iam.Role;
 
     constructor(scope: Construct, id: string, props: DbInitializerProps) {
         super(scope, id);
@@ -33,6 +34,22 @@ export class DbInitializer extends Construct {
             allowAllOutbound: true
         });
 
+        this.lambdaInitRole = new iam.Role(this, 'LambdaInitRole', {
+            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
+        });
+
+        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ["*"],
+            actions: [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DescribeInstances",
+                "ec2:AttachNetworkInterface"
+            ]
+        }));
+
         // Create a lambda that will create tables when called
         const rdsInitLambda = new NodejsFunction(this, 'DbInitLambda', {
             vpc: props.vpc,
@@ -46,9 +63,10 @@ export class DbInitializer extends Construct {
             functionName: `${id}-RDSInit${stack.stackName}`,
             vpcSubnets: props.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }),
             allowAllOutbound: true,
-            bundling: {
-                externalModules: ['data-api-client']
-            }
+            // bundling: {
+            //     externalModules: ['aws-sdk']
+            // },
+            role: this.lambdaInitRole
         });
 
         // onUpdate AwsCustomResource, will do this call:
@@ -60,12 +78,12 @@ export class DbInitializer extends Construct {
         };
 
         // Role to be assumed by the AwsCustomResource
-        const customResourceFnRole = new Role(this, 'AwsCustomResourceRole', {
-            assumedBy: new ServicePrincipal('lambda.amazonaws.com')
+        const customResourceFnRole = new iam.Role(this, 'AwsCustomResourceRole', {
+            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
 
         // allow the lambda to be called
-        customResourceFnRole.addToPolicy(new PolicyStatement({
+        customResourceFnRole.addToPolicy(new iam.PolicyStatement({
             resources: [`arn:aws:lambda:${stack.region}:${stack.account}:function:*-RDSInit${stack.stackName}`],
             actions: ['lambda:InvokeFunction']
         }));

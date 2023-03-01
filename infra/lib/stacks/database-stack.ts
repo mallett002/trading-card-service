@@ -42,14 +42,16 @@ export class DatabaseStack extends cdk.Stack {
 
       new cdk.CfnOutput(this, 'Cluster ARN', { value: this.clusterArn });
 
-      const dbInitialization = new DbInitializer(this, 'RdsInitializer', {
+      const initializer = new DbInitializer(this, 'RdsInitializer', {
         vpc: props.vpc,
         dbSecret: this.dbSecret,
         databaseName: this.databaseName,
         clusterArn: this.clusterArn
       });
 
-      // Todo: Create the lambda code that will create the tables (./rds-initialization/index.js)
+      initializer.customResource.node.addDependency(this.dbCluster);
+
+      this.dbCluster.grantDataApiAccess(initializer.lambdaInitRole);
 
     }
 
