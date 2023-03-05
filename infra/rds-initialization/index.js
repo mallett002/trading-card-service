@@ -1,7 +1,7 @@
 const DataApiClient = require('data-api-client');
 
 const createTablesQuery = `
-CREATE TABLE CARD (
+CREATE TABLE IF NOT EXISTS CARD (
     ID                      SERIAL PRIMARY KEY,
     BRAND                   VARCHAR(50) NOT NULL,
     CARD_NUMBER             INT,

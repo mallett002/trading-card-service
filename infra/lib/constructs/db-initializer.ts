@@ -27,13 +27,6 @@ export class DbInitializer extends Construct {
         // Look up the stack
         const stack = Stack.of(this);
 
-        // make new SG for the lambda
-        const lambdaSg = new ec2.SecurityGroup(this, 'DbInitLambdaSG', {
-            securityGroupName: `${id}DbInitLambdaSG`,
-            vpc: props.vpc,
-            allowAllOutbound: true
-        });
-
         this.lambdaInitRole = new iam.Role(this, 'LambdaInitRole', {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
@@ -63,9 +56,6 @@ export class DbInitializer extends Construct {
             functionName: `${id}-RDSInit${stack.stackName}`,
             vpcSubnets: props.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }),
             allowAllOutbound: true,
-            // bundling: {
-            //     externalModules: ['aws-sdk']
-            // },
             role: this.lambdaInitRole
         });
 
@@ -77,7 +67,7 @@ export class DbInitializer extends Construct {
             physicalResourceId: PhysicalResourceId.of(`${id}-AwsSdkCall-${rdsInitLambda.currentVersion.version}`)
         };
 
-        // Role to be assumed by the AwsCustomResource
+        // Role to be assumed by the AwsCustomResource backed lambda that gets created
         const customResourceFnRole = new iam.Role(this, 'AwsCustomResourceRole', {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
