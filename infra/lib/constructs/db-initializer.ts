@@ -8,7 +8,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as iam from "aws-cdk-lib/aws-iam";
 
 export interface DbInitializerProps {
-    vpc: ec2.Vpc
+    vpc: ec2.Vpc;
     dbSecret: rds.DatabaseSecret;
     databaseName: string;
     clusterArn: string;
@@ -43,15 +43,32 @@ export class DbInitializer extends Construct {
             ]
         }));
 
+        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: [props.dbSecret.secretArn],
+            actions: [ "secretsmanager:GetSecretValue" ]
+        }));
+
+        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ["*"],
+            actions: [ 
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ]
+        }));
+
         // Create a lambda that will create tables when called
         const rdsInitLambda = new NodejsFunction(this, 'DbInitLambda', {
             vpc: props.vpc,
             entry: './rds-initialization/index.js',
             runtime: lambda.Runtime.NODEJS_18_X,
             environment: {
-                SECRET_ARN: props.dbSecret.secretArn,
-                CLUSTER_ARN: props.clusterArn,
-                DATABASE_NAME: props.databaseName
+                // SECRET_ARN: props.dbSecret.secretArn,
+                // CLUSTER_ARN: props.clusterArn,
+                // DATABASE_NAME: props.databaseName
+                SECRET_NAME: props.dbSecret.secretName
             },
             functionName: `${id}-RDSInit${stack.stackName}`,
             vpcSubnets: props.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }),
