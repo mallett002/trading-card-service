@@ -5,6 +5,8 @@
     "trading-card-service": "bin/trading-card-service.js"
   },
   "scripts": {
+    "deploy": "cdk deploy prod/network prod/database prod/app --require-approval never",
+    "destroy": "cdk destroy prod/network prod/database prod/app --require-approval never",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
@@ -13,9 +15,9 @@
   "devDependencies": {
     "@types/jest": "^29.2.4",
     "@types/node": "18.11.15",
+    "aws-cdk": "2.57.0",
     "jest": "^29.3.1",
     "ts-jest": "^29.0.3",
-    "aws-cdk": "2.57.0",
     "ts-node": "^10.9.1",
     "typescript": "~4.9.4"
   },
