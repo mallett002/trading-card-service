@@ -5,6 +5,8 @@ import { NetworkStack } from '../stacks/network-stack';
 import { DatabaseStack } from '../stacks/database-stack';
 import { ApplicationStack } from '../stacks/application-stack';
 
+
+// On step: Building the auth API
 export class ProductionStage extends cdk.Stage {
 
     constructor(scope: Construct, id: string, props?: cdk.StageProps) {
