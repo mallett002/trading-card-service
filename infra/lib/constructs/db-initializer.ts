@@ -20,6 +20,7 @@ export class DbInitializer extends Construct {
     public readonly customResource: AwsCustomResource;
     public readonly function: lambda.Function;
     public readonly lambdaInitRole: iam.Role;
+    public readonly lambdaSG: ec2.SecurityGroup;
 
     constructor(scope: Construct, id: string, props: DbInitializerProps) {
         super(scope, id);
@@ -31,33 +32,11 @@ export class DbInitializer extends Construct {
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
 
-        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            resources: ["*"],
-            actions: [
-                "ec2:DescribeNetworkInterfaces",
-                "ec2:CreateNetworkInterface",
-                "ec2:DeleteNetworkInterface",
-                "ec2:DescribeInstances",
-                "ec2:AttachNetworkInterface"
-            ]
-        }));
+        this.applyPoliciesToRole(props.dbSecret);
 
-        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            resources: [props.dbSecret.secretArn],
-            actions: [ "secretsmanager:GetSecretValue" ]
-        }));
-
-        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            resources: ["*"],
-            actions: [ 
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ]
-        }));
+        this.lambdaSG = new ec2.SecurityGroup(this, 'LambdaSG', {
+            vpc: props.vpc
+        });
 
         // Create a lambda that will create tables when called
         const rdsInitLambda = new NodejsFunction(this, 'DbInitLambda', {
@@ -65,16 +44,31 @@ export class DbInitializer extends Construct {
             entry: './rds-initialization/index.js',
             runtime: lambda.Runtime.NODEJS_18_X,
             environment: {
-                // SECRET_ARN: props.dbSecret.secretArn,
-                // CLUSTER_ARN: props.clusterArn,
-                // DATABASE_NAME: props.databaseName
-                SECRET_NAME: props.dbSecret.secretName
+                SECRET_ARN: props.dbSecret.secretArn,
+                CLUSTER_ARN: props.clusterArn,
+                DATABASE_NAME: props.databaseName
             },
             functionName: `${id}-RDSInit${stack.stackName}`,
             vpcSubnets: props.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }),
             allowAllOutbound: true,
-            role: this.lambdaInitRole
+            role: this.lambdaInitRole,
+            securityGroups: [this.lambdaSG]
         });
+
+        // const rdsInitLambda = new lambda.DockerImageFunction(this, 'DbInitLambdaImage', {
+        //     code: lambda.DockerImageCode.fromImageAsset('./rds-initialization',                 {
+        //         platform: Platform.LINUX_AMD64
+        //     }),
+        //     environment: {
+        //         SECRET_NAME: props.dbSecret.secretName
+        //     },
+        //     functionName: `${id}-RDSInit${stack.stackName}`,
+        //     vpc: props.vpc,
+        //     securityGroups: [this.lambdaSG],
+        //     role: this.lambdaInitRole,
+        //     allowAllOutbound: true,
+        //     vpcSubnets: props.vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }),
+        // });
 
         // onUpdate AwsCustomResource, will do this call:
         const sdkCall: AwsSdkCall = {
@@ -105,5 +99,35 @@ export class DbInitializer extends Construct {
 
         this.response = this.customResource.getResponseField('Payload');
         this.function = rdsInitLambda;
+    }
+
+    private applyPoliciesToRole(dbSecret: rds.DatabaseSecret) {
+        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ["*"],
+            actions: [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DescribeInstances",
+                "ec2:AttachNetworkInterface"
+            ]
+        }));
+
+        // this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
+        //     effect: iam.Effect.ALLOW,
+        //     resources: [dbSecret.secretArn],
+        //     actions: [ "secretsmanager:GetSecretValue" ]
+        // }));
+
+        this.lambdaInitRole.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: ["*"],
+            actions: [ 
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ]
+        }));
     }
 }

@@ -22,25 +22,29 @@ export class DatabaseStack extends cdk.Stack {
         username: 'clusteradmin',
       });
 
-      // this.databaseName = 'TradingCardDb';
-  
-      // new cdk.CfnOutput(this, 'Secret Name', { value: this.dbSecret.secretName });
-      // new cdk.CfnOutput(this, 'Secret ARN', { value: this.dbSecret.secretArn });
-      // new cdk.CfnOutput(this, 'Secret Full ARN', { value: this.dbSecret.secretFullArn || '' });
+      const dbSecurityGroup = new ec2.SecurityGroup(this, 'DbSecurityGroup', {
+        vpc: props.vpc,
+      });
 
-      // this.dbCluster = new rds.ServerlessCluster(this, 'AuroraCluster', {
-      //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
-      //   parameterGroup: rds.ParameterGroup.fromParameterGroupName(this, 'ParameterGroup', 'default.aurora-postgresql10'),
-      //   enableDataApi: true,
-      //   engine: rds.DatabaseClusterEngine.AURORA_POSTGRESQL,
-      //   vpc: props.vpc,
-      //   credentials: rds.Credentials.fromSecret(this.dbSecret),
-      //   defaultDatabaseName: this.databaseName,
-      // });
+      this.databaseName = 'TradingCardDb';
   
-      // this.clusterArn = this.dbCluster.clusterArn;
+      new cdk.CfnOutput(this, 'Secret Name', { value: this.dbSecret.secretName });
+      new cdk.CfnOutput(this, 'Secret ARN', { value: this.dbSecret.secretArn });
 
-      // new cdk.CfnOutput(this, 'Cluster ARN', { value: this.clusterArn });
+      this.dbCluster = new rds.ServerlessCluster(this, 'AuroraCluster', {
+        vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        parameterGroup: rds.ParameterGroup.fromParameterGroupName(this, 'ParameterGroup', 'default.aurora-postgresql10'),
+        enableDataApi: true,
+        engine: rds.DatabaseClusterEngine.AURORA_POSTGRESQL,
+        vpc: props.vpc,
+        credentials: rds.Credentials.fromSecret(this.dbSecret),
+        defaultDatabaseName: this.databaseName,
+        securityGroups: [dbSecurityGroup]
+      });
+  
+      this.clusterArn = this.dbCluster.clusterArn;
+
+      new cdk.CfnOutput(this, 'Cluster ARN', { value: this.clusterArn });
 
       const initializer = new DbInitializer(this, 'RdsInitializer', {
         vpc: props.vpc,
@@ -49,9 +53,10 @@ export class DatabaseStack extends cdk.Stack {
         clusterArn: this.clusterArn
       });
 
-      // initializer.customResource.node.addDependency(this.dbCluster);
+      initializer.customResource.node.addDependency(this.dbSecret);
+      initializer.customResource.node.addDependency(this.dbCluster);
 
-      // this.dbCluster.grantDataApiAccess(initializer.lambdaInitRole);
+      this.dbCluster.grantDataApiAccess(initializer.lambdaInitRole);
 
     }
 

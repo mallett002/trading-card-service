@@ -9,7 +9,6 @@
     "destroy": "cdk destroy prod/network prod/database prod/app --require-approval never",
     "build": "tsc",
     "watch": "tsc -w",
-    "flyway": "flyway --help",
     "test": "jest",
     "cdk": "cdk"
   },
@@ -23,7 +22,6 @@
     "typescript": "~4.9.4"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.282.0",
     "aws-cdk-lib": "2.57.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
