@@ -1,28 +1,52 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from "constructs";
-import { UserPool } from "aws-cdk-lib/aws-cognito";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 
-export class CognitoUserPool extends Construct {
+export class AuthConstruct extends Construct {
     public readonly userPoolId: string;
-	public readonly userPoolClientId: string;
+    public readonly userPoolClientId: string;
 
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
         // Create new user pool (Directory of users for our application)
-        const userPool = new UserPool(this, 'TradingCardUserPool', {
+        const userPool = new cognito.UserPool(this, 'TradingCardUserPool', {
             signInAliases: { username: true, email: true },
             selfSignUpEnabled: true,
             removalPolicy: RemovalPolicy.DESTROY,
+            autoVerify: { email: true }
         });
 
-        // Create the client that will interact with this userpool
+
+        // Sign in with amazon:
+        // const amazonProvider = new cognito.UserPoolIdentityProviderAmazon(this, 'Amazon', {
+        //     userPool,
+        //     clientId: 'amzn-client-id',
+        //     clientSecret: 'amzn-client-secret',
+        // });
+
+        // Create the app client that will interact with this userpool
         const appClient = userPool.addClient('TradingCardClient', {
-            authFlows: { userPassword: true }
+            authFlows: { userPassword: true },
+            oAuth: {
+                flows: {
+                    authorizationCodeGrant: true,
+                    implicitCodeGrant: true
+                },
+                //    callbackUrls: [''],
+                //    logoutUrls: ['']
+            }
+            // if want signin with amazon:
+            // supportedIdentityProviders: [
+            //     cognito.UserPoolClientIdentityProvider.AMAZON,
+            // ],
         });
+
+
+        // appClient.node.addDependency(amazonProvider);
 
         this.userPoolId = userPool.userPoolId;
-		this.userPoolClientId = appClient.userPoolClientId;
+        this.userPoolClientId = appClient.userPoolClientId;
     }
 
 }
