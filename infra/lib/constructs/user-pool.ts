@@ -1,7 +1,7 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import { Domain } from 'domain';
+
 
 export class AuthConstruct extends Construct {
     public readonly userPoolId: string;
@@ -25,13 +25,6 @@ export class AuthConstruct extends Construct {
         });
 
 
-        // Sign in with amazon:
-        // const amazonProvider = new cognito.UserPoolIdentityProviderAmazon(this, 'Amazon', {
-        //     userPool,
-        //     clientId: 'amzn-client-id',
-        //     clientSecret: 'amzn-client-secret',
-        // });
-
         // Create the app client that will interact with this userpool
         const appClient = userPool.addClient('TradingCardClient', {
             authFlows: { userPassword: true },
@@ -40,30 +33,18 @@ export class AuthConstruct extends Construct {
                     authorizationCodeGrant: true,
                     implicitCodeGrant: true
                 },
-                // Todo: figure what these need to be:
-                callbackUrls: [''],
-                logoutUrls: ['']
-
+                scopes: [cognito.OAuthScope.OPENID],
+                callbackUrls: ['https://williamalanmallett.link'],
+                logoutUrls: ['https://williamalanmallett.link']
             }
-            // if want signin with amazon:
-            // supportedIdentityProviders: [
-            //     cognito.UserPoolClientIdentityProvider.AMAZON,
-            // ],
         });
 
-        // Todo create hosted ui:
-        // const certificateArn = 'arn:aws:acm:us-east-1:123456789012:certificate/11-3336f1-44483d-adc7-9cd375c5169d';
+        const domain = userPool.addDomain("CognitoDomain", {
+            cognitoDomain: {
+                domainPrefix: "williamalanmallet",
+            },
+        });
 
-        // const domainCert = certificatemanager.Certificate.fromCertificateArn(this, 'domainCert', certificateArn);
-        // userPool.addDomain('CustomDomain', {
-        //     customDomain: {
-        //         domainName: 'user.myapp.com',
-        //         certificate: domainCert,
-        //     },
-        // });
-
-
-        // appClient.node.addDependency(amazonProvider);
 
         this.userPoolId = userPool.userPoolId;
         this.userPoolClientId = appClient.userPoolClientId;

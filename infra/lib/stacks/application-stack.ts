@@ -76,6 +76,6 @@ export class ApplicationStack extends cdk.Stack {
       //   ),
       // });
 
-      const auth = new AuthConstruct(this, 'TradingCardAuth')
+      const auth = new AuthConstruct(this, 'TradingCardAuth');
     }
 }
