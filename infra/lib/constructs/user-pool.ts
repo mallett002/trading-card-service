@@ -45,6 +45,8 @@ export class AuthConstruct extends Construct {
             },
         });
 
+        // todo: user pool authorizer & gateway: http://buraktas.com/oauth-authorization-code-flow-aws-cdk/
+
 
         this.userPoolId = userPool.userPoolId;
         this.userPoolClientId = appClient.userPoolClientId;
