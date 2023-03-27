@@ -11,7 +11,9 @@ import { ApplicationProtocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as Route53 from "aws-cdk-lib/aws-route53";
 import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
-import { AuthConstruct } from '../constructs/user-pool';
+import { AuthConstruct } from '../constructs/auth-construct';
+import { RestApiGateway } from '../constructs/gateway';
+
 
 interface ApplicationStackProps extends cdk.StackProps {
   vpc: ec2.Vpc,
@@ -77,5 +79,9 @@ export class ApplicationStack extends cdk.Stack {
       // });
 
       const auth = new AuthConstruct(this, 'TradingCardAuth');
+
+      const gateway = new RestApiGateway(this, 'TradingCardApiGateway', {
+        userPool: auth.userPool
+      });
     }
 }
