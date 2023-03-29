@@ -10,9 +10,12 @@ export class NetworkStack extends cdk.Stack {
     public readonly vpc: Vpc;
     public readonly certificate: cdk.aws_certificatemanager.Certificate;
     public readonly hostedZone: route53.IHostedZone;
+    public readonly domainName: string;
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
       super(scope, id, props);
+
+      this.domainName = 'williamalanmallett.link';
 
       this.vpc = new ec2.Vpc(this, 'TradingCardServiceVPC', {
         // Subnets for each availiability zone:
@@ -31,7 +34,7 @@ export class NetworkStack extends cdk.Stack {
         maxAzs: 2
       });
   
-      const dns = new DNSConstruct(this, 'DNSConstruct');
+      const dns = new DNSConstruct(this, 'DNSConstruct', { domainName: this.domainName });
 
       this.certificate = dns.certificate;
       this.hostedZone = dns.hostedZone;
