@@ -6,6 +6,7 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 export class AuthConstruct extends Construct {
     public readonly userPool: cognito.UserPool;
     public readonly userPoolClientId: string;
+    public readonly userPoolClient: cognito.UserPoolClient;
 
     constructor(scope: Construct, id: string) {
         super(scope, id);
@@ -38,7 +39,7 @@ export class AuthConstruct extends Construct {
         });
 
         // Create the app client that will interact with this userpool
-        const appClient = this.userPool.addClient('TradingCardClient', {
+        this.userPoolClient = this.userPool.addClient('TradingCardClient', {
             authFlows: { userPassword: true },
             oAuth: {
                 flows: {
@@ -47,6 +48,7 @@ export class AuthConstruct extends Construct {
                 },
                 scopes: [
                     cognito.OAuthScope.OPENID,
+                    cognito.OAuthScope.PROFILE,
                     cognito.OAuthScope.resourceServer(resourceServer, cardUserScope) 
                 ],
                 callbackUrls: ['https://williamalanmallett.link'],
@@ -54,7 +56,8 @@ export class AuthConstruct extends Construct {
             }
         });
 
-        const domain = this.userPool.addDomain("CognitoDomain", {
+        // Add a domain for the hosted UI for signup/signin
+        this.userPool.addDomain("CognitoDomain", {
             cognitoDomain: {
                 domainPrefix: "williamalanmallet",
             },

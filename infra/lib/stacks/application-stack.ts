@@ -42,6 +42,7 @@ export class ApplicationStack extends cdk.Stack {
         vpc: props.vpc,
       });
   
+      // Troubleshooting: https://docs.aws.amazon.com/en_en/AmazonECS/latest/developerguide/troubleshoot-service-load-balancers.html
       const albFargate = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
         certificate: props.certificate,
         domainZone: props.hostedZone,
@@ -49,6 +50,10 @@ export class ApplicationStack extends cdk.Stack {
         cluster: ecsCluster,
         desiredCount: 2,
         assignPublicIp: true,
+        // working on health:
+        // memoryLimitMiB: 1024,
+        // cpu: 512,
+        
         taskImageOptions: {
           image: ecs.ContainerImage.fromDockerImageAsset(dockerImage),
           containerPort: 3000,
@@ -79,13 +84,14 @@ export class ApplicationStack extends cdk.Stack {
         ),
       });
 
-      const auth = new AuthConstruct(this, 'TradingCardAuth');
+      // const auth = new AuthConstruct(this, 'TradingCardAuth');
 
-      const gateway = new ApiGateway(this, 'TradingCardApiGateway', {
-        userPool: auth.userPool,
-        domainName: props.domainName,
-        certificate: props.certificate,
-        listener: albFargate.listener
-      });
+      // const gateway = new ApiGateway(this, 'TradingCardApiGateway', {
+      //   userPool: auth.userPool,
+      //   userPoolClient: auth.userPoolClient,
+      //   domainName: props.domainName,
+      //   certificate: props.certificate,
+      //   listener: albFargate.listener
+      // });
     }
 }
