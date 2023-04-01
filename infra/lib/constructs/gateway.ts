@@ -62,6 +62,7 @@ export class ApiGateway extends Construct {
         );
 
         // authorized routes
+        // Getting Forbidden with token. Something with scopes?
         httpApi.addRoutes({
             path: '/card',
             methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
