@@ -20,17 +20,17 @@ export class ProductionStage extends cdk.Stage {
         env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
       });
 
-      // const applicationStack = new ApplicationStack(this, 'app', {
-      //   vpc: networkStack.vpc,
-      //   certificate: networkStack.certificate,
-      //   hostedZone: networkStack.hostedZone,
-      //   domainName: networkStack.domainName,
-      //   databaseName: databaseStack.databaseName,
-      //   dbSecret: databaseStack.dbSecret,
-      //   clusterArn: databaseStack.clusterArn,
-      //   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-      // });
+      const applicationStack = new ApplicationStack(this, 'app', {
+        vpc: networkStack.vpc,
+        certificate: networkStack.certificate,
+        hostedZone: networkStack.hostedZone,
+        domainName: networkStack.domainName,
+        databaseName: databaseStack.databaseName,
+        dbSecret: databaseStack.dbSecret,
+        clusterArn: databaseStack.clusterArn,
+        env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+      });
 
-      // databaseStack.grantDatabaseAccess(applicationStack.taskRole);
+      databaseStack.grantDatabaseAccess(applicationStack.taskRole);
     }
 }

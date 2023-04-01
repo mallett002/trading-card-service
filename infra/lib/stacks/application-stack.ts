@@ -50,10 +50,11 @@ export class ApplicationStack extends cdk.Stack {
         cluster: ecsCluster,
         desiredCount: 2,
         assignPublicIp: true,
-        // working on health:
-        // memoryLimitMiB: 1024,
-        // cpu: 512,
-        
+        memoryLimitMiB: 1024,
+        cpu: 512,
+        healthCheckGracePeriod: cdk.Duration.seconds(60),
+        maxHealthyPercent: 200,
+        minHealthyPercent: 50,
         taskImageOptions: {
           image: ecs.ContainerImage.fromDockerImageAsset(dockerImage),
           containerPort: 3000,
@@ -72,6 +73,15 @@ export class ApplicationStack extends cdk.Stack {
           subnetType: ec2.SubnetType.PUBLIC
         },
         loadBalancerName: 'trading-service-lb',
+      });
+
+      albFargate.targetGroup.configureHealthCheck({
+        enabled: true,
+        healthyThresholdCount: 3,
+        path: '/health',
+        interval: cdk.Duration.seconds(10),
+        // timeout: cdk.Duration.seconds(30),
+        healthyHttpCodes: '200'
       });
 
       this.taskRole = albFargate.taskDefinition.taskRole;
