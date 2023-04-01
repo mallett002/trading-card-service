@@ -7,6 +7,10 @@ import * as integrations from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import * as apigwv2 from '@aws-cdk/aws-apigatewayv2-alpha';
 import { ApplicationListener } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as apiGatewayAuthorizers from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
+import * as Route53 from "aws-cdk-lib/aws-route53";
+import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
+import { IDomainName } from '@aws-cdk/aws-apigatewayv2-alpha';
+
 
 interface GatewayProps {
     userPool: cognito.UserPool,
@@ -14,6 +18,7 @@ interface GatewayProps {
     certificate: cdk.aws_certificatemanager.Certificate;
     listener: ApplicationListener;
     userPoolClient: cognito.UserPoolClient;
+    hostedZone: Route53.IHostedZone;
 }
 
 export class ApiGateway extends Construct {
@@ -23,23 +28,20 @@ export class ApiGateway extends Construct {
     constructor(scope: Construct, id: string, props: GatewayProps) {
         super(scope, id);
 
-        // const authorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'TradingCardAuthorizer', {
-        //     cognitoUserPools: [props.userPool],
-        // });
-
-        // // create domain
+        // V2:----------------------------------------------------------------------------------------------------------------
+        // create gateway domain
         const domainName = new apigwv2.DomainName(this, 'ApiGatewayDomainName', {
             domainName: props.domainName,
             certificate: props.certificate
         });
 
-        // // integration is the load balancer
+        // integrate the the load balancer with this gateway
         const albIntegration = new integrations.HttpAlbIntegration('AlbGatewayIntegration', props.listener, {
-            // secureServerName: props.domainName (need this?)
+            secureServerName: props.domainName
             // vpcLink need this??
         });
 
-
+        // The gateway
         const httpApi = new apigwv2.HttpApi(this, 'HttpApiGateway', {
             defaultAuthorizationScopes: ['tradingcardservice-resource-server/tradingcardservice.write', 'openid', 'profile'],
             // defaultAuthorizer: authorizer,
@@ -49,36 +51,65 @@ export class ApiGateway extends Construct {
             }
         });
 
+        // authorizer on the gateway
         const authorizer = new apiGatewayAuthorizers.HttpUserPoolAuthorizer(
             'user-pool-authorizer',
             props.userPool,
             {
                 userPoolClients: [props.userPoolClient],
-                // identitySource: ['$request.header.Authorization'],
+                identitySource: ['$request.header.Authorization'],
             },
         );
 
+        // authorized routes
         httpApi.addRoutes({
-            path: '/{proxy+}',
-            methods: [apigwv2.HttpMethod.ANY],
+            path: '/card',
+            methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
             authorizer: authorizer,
             integration: albIntegration
         });
 
+        // route53 A Record --> gateway
+        new Route53.ARecord(this, 'AliasRecord', {
+            zone: props.hostedZone,
+            target: Route53.RecordTarget.fromAlias(
+                new Route53Targets.ApiGatewayv2DomainProperties(domainName.regionalDomainName, domainName.regionalHostedZoneId)
+            ),
+        });
 
-        // const httpAuthorizer = new apigwv2.HttpAuthorizer(this, 'MyHttpAuthorizer', {
-        //     httpApi: httpApi,
-        //     identitySource: ['identitySource'],
-        //     type: apigwv2.HttpAuthorizerType.JWT,
 
-        //     // the properties below are optional
-        //     authorizerName: 'authorizerName',
-        //     authorizerUri: 'authorizerUri',
-        //     enableSimpleResponses: false,
-        //     jwtAudience: ['jwtAudience'],
-        //     jwtIssuer: 'jwtIssuer',
-        //     payloadFormatVersion: apigwv2.AuthorizerPayloadVersion.VERSION_1_0,
-        //     resultsCacheTtl: cdk.Duration.minutes(30),
+        // v1:-----------------------------------------------------------------------------------------------------------
+        // const cognitoAuth = new apigw.CognitoUserPoolsAuthorizer(this, 'TradingCardAuthorizer', {
+        //     cognitoUserPools: [props.userPool],
         // });
+
+        // // RestApi:
+        // const api = new apigw.RestApi(this, 'myApi', {
+        //     defaultCorsPreflightOptions: {
+        //         allowOrigins: apigw.Cors.ALL_ORIGINS,
+        //         allowMethods: apigw.Cors.ALL_METHODS, // this is also the default
+        //     },
+        //     defaultIntegration: new apigw.Integration({
+        //         type: 
+        //     }),
+        //     deploy: true
+        // });
+
+        // const cardEndpoint = api.root.addResource('card');
+
+        // const integration = new integrations.HttpAlbIntegration('GatewayToAlb', props.listener, {
+        //     secureServerName: props.domainName,
+        //     // vpcLink need this??
+        // });
+
+        // cardEndpoint.addMethod('GET', integration, {
+        //     authorizer: cognitoAuth
+        // });
+
+
+        /* Todo:
+            - make load balancer private so forced to use apigateway
+            - make sure the /health endpoint doesn't have auth around it
+        */
     }
 }
