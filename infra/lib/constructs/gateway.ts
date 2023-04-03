@@ -43,7 +43,11 @@ export class ApiGateway extends Construct {
 
         // The gateway
         const httpApi = new apigwv2.HttpApi(this, 'HttpApiGateway', {
-            defaultAuthorizationScopes: ['tradingcardservice-resource-server/tradingcardservice.write', 'openid', 'profile'],
+            defaultAuthorizationScopes: [
+                // 'tradingcardservice-resource-server/tradingcardservice.write',
+                'openid',
+                'profile'
+            ],
             // defaultAuthorizer: authorizer,
             defaultIntegration: albIntegration,
             defaultDomainMapping: {
@@ -65,7 +69,22 @@ export class ApiGateway extends Construct {
         // Getting Forbidden with token. Something with scopes?
         httpApi.addRoutes({
             path: '/card',
-            methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
+            // authorizationScopes: ['write:books'] ???
+            methods: [apigwv2.HttpMethod.POST],
+            authorizer: authorizer,
+            integration: albIntegration
+        });
+
+        httpApi.addRoutes({
+            path: '/card/{id}', // think this is correct
+            methods: [apigwv2.HttpMethod.GET],
+            authorizer: authorizer,
+            integration: albIntegration
+        });
+
+        httpApi.addRoutes({
+            path: '/cards',
+            methods: [apigwv2.HttpMethod.GET],
             authorizer: authorizer,
             integration: albIntegration
         });

@@ -26,17 +26,21 @@ export class AuthConstruct extends Construct {
         });
 
         // Create a scope for the token to be able to access things on our API
-        const cardUserScope = new cognito.ResourceServerScope({
-            scopeName: 'tradingcardservice.write',
-            scopeDescription: 'tradingcardservice write scope for users',
-        });
+        // const cardUserScope = new cognito.ResourceServerScope({
+        //     scopeName: 'tradingcardservice.write',
+        //     scopeDescription: 'tradingcardservice write scope for users',
+        // });
 
-        // The resource server that gets added to the app client has the scope created above
-        const resourceServer = new cognito.UserPoolResourceServer(this, 'tradingcardservice-resource-server', {
-            identifier: 'tradingcardservice-resource-server',
-            userPool: this.userPool,
-            scopes: [cardUserScope],
-        });
+        // The resource server that gets added to the app client has the scope created above. Resource server verifies access token.
+        // const resourceServer = new cognito.UserPoolResourceServer(this, 'tradingcardservice-resource-server', {
+        //     identifier: 'tradingcardservice-resource-server',
+        //     userPool: this.userPool,
+        //     scopes: [
+        //         cardUserScope,
+        //         cognito.OAuthScope.OPENID,
+        //         cognito.OAuthScope.PROFILE
+        //     ],
+        // });
 
         // Create the app client that will interact with this userpool
         this.userPoolClient = this.userPool.addClient('TradingCardClient', {
@@ -49,7 +53,7 @@ export class AuthConstruct extends Construct {
                 scopes: [
                     cognito.OAuthScope.OPENID,
                     cognito.OAuthScope.PROFILE,
-                    cognito.OAuthScope.resourceServer(resourceServer, cardUserScope) 
+                    // cognito.OAuthScope.resourceServer(resourceServer, cardUserScope) 
                 ],
                 callbackUrls: ['https://williamalanmallett.link'],
                 logoutUrls: ['https://williamalanmallett.link']
