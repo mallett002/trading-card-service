@@ -66,10 +66,10 @@ export class ApiGateway extends Construct {
         );
 
         // authorized routes
-        // Getting Forbidden with token. Something with scopes?
+        // TODO: custom scopes. read & write
         httpApi.addRoutes({
             path: '/card',
-            // authorizationScopes: ['write:books'] ???
+            // authorizationScopes: ['read:cards']
             methods: [apigwv2.HttpMethod.POST],
             authorizer: authorizer,
             integration: albIntegration
@@ -77,6 +77,7 @@ export class ApiGateway extends Construct {
 
         httpApi.addRoutes({
             path: '/card/{id}', // think this is correct
+            // authorizationScopes: ['read:cards']
             methods: [apigwv2.HttpMethod.GET],
             authorizer: authorizer,
             integration: albIntegration
@@ -84,12 +85,13 @@ export class ApiGateway extends Construct {
 
         httpApi.addRoutes({
             path: '/cards',
+            // authorizationScopes: ['write:cards']
             methods: [apigwv2.HttpMethod.GET],
             authorizer: authorizer,
             integration: albIntegration
         });
 
-        // route53 A Record --> gateway
+        // route53 A Record --> gateway 
         new Route53.ARecord(this, 'AliasRecord', {
             zone: props.hostedZone,
             target: Route53.RecordTarget.fromAlias(
