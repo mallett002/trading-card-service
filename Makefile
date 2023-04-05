@@ -1,4 +1,4 @@
-client_id := 55ovc1gcchhcc4s9da8gvt4r9c
+client_id := 6joopnb17969k04b91vp8qbrfk
 
 # make username=mscott password=Password1! email=mscott@dispostable.com create_user
 create_user:
@@ -8,7 +8,6 @@ create_user:
 confirm_user:
 	aws cognito-idp confirm-sign-up --client-id $(client_id) --username $(username) --confirmation-code $(confirm)
 
-# make username=mscott password=Password1! login (This doesn't give the correct scopes)
-# login through ui instead: https://williamalanmallet.auth.us-east-1.amazoncognito.com/oauth2/authorize?client_id=55ovc1gcchhcc4s9da8gvt4r9c&response_type=code&scope=openid&redirect_uri=https%3A%2F%2Fwilliamalanmallett.link
-# login:
-# 	aws cognito-idp initiate-auth --client-id $(client_id) --auth-flow USER_PASSWORD_AUTH --auth-parameters USERNAME=$(username),PASSWORD=$(password)
+# login through hosted ui to get token:
+# https://williamalanmallet.auth.us-east-1.amazoncognito.com/oauth2/authorize?client_id=6joopnb17969k04b91vp8qbrfk&response_type=token&scope=openid&redirect_uri=https%3A%2F%2Fwilliamalanmallett.link
+

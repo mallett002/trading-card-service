@@ -48,7 +48,6 @@ export class ApplicationStack extends cdk.Stack {
         protocol: ApplicationProtocol.HTTPS,
         cluster: ecsCluster,
         desiredCount: 2,
-        // assignPublicIp: true,
         assignPublicIp: false,
         memoryLimitMiB: 1024,
         cpu: 512,
@@ -70,7 +69,6 @@ export class ApplicationStack extends cdk.Stack {
           }
         },
         taskSubnets: {
-          // subnetType: ec2.SubnetType.PUBLIC
           subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
         },
         loadBalancerName: 'trading-service-lb',
@@ -86,17 +84,6 @@ export class ApplicationStack extends cdk.Stack {
 
       this.taskRole = albFargate.taskDefinition.taskRole;
   
-      // Create ARecord that routes williamalanmallet.link to the load balancer
-      // new Route53.ARecord(this, 'AliasRecord', {
-      //   zone: props.hostedZone,
-      //   // target: Route53.RecordTarget.fromAlias(
-      //   //   new Route53Targets.LoadBalancerTarget(albFargate.loadBalancer),
-      //   // ),
-      //   target: Route53.RecordTarget.fromAlias(
-      //     new Route53Targets.ApiGateway()
-      //   )
-      // });
-
       const auth = new AuthConstruct(this, 'TradingCardAuth');
 
       new ApiGateway(this, 'TradingCardApiGateway', {
