@@ -1,5 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import { RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as integrations from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
@@ -60,26 +59,9 @@ export class ApiGateway extends Construct {
         );
 
         // authorized routes
-        httpApi.addRoutes({
-            path: '/card',
-            methods: [apigwv2.HttpMethod.POST],
-            authorizer: authorizer,
-            integration: albIntegration
-        });
-
-        httpApi.addRoutes({
-            path: '/card/{id}',
-            methods: [apigwv2.HttpMethod.GET],
-            authorizer: authorizer,
-            integration: albIntegration
-        });
-
-        httpApi.addRoutes({
-            path: '/cards',
-            methods: [apigwv2.HttpMethod.GET],
-            authorizer: authorizer,
-            integration: albIntegration
-        });
+        this.applyRoutesToApi(httpApi, '/card', apigwv2.HttpMethod.POST, authorizer, albIntegration);
+        this.applyRoutesToApi(httpApi, '/card/{id}', apigwv2.HttpMethod.GET, authorizer, albIntegration);
+        this.applyRoutesToApi(httpApi, '/cards', apigwv2.HttpMethod.GET, authorizer, albIntegration);
 
         // route53 A Record --> gateway 
         new Route53.ARecord(this, 'AliasRecord', {
@@ -87,6 +69,21 @@ export class ApiGateway extends Construct {
             target: Route53.RecordTarget.fromAlias(
                 new Route53Targets.ApiGatewayv2DomainProperties(domainName.regionalDomainName, domainName.regionalHostedZoneId)
             ),
+        });
+    }
+
+    private applyRoutesToApi(
+        httpApi: apigwv2.HttpApi,
+        path: string,
+        method: apigwv2.HttpMethod,
+        authorizer: apiGatewayAuthorizers.HttpUserPoolAuthorizer,
+        integration: integrations.HttpAlbIntegration
+    ): void {
+        httpApi.addRoutes({
+            path: path,
+            methods: [method],
+            authorizer,
+            integration
         });
     }
 }

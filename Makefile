@@ -1,4 +1,4 @@
-client_id := 6joopnb17969k04b91vp8qbrfk
+client_id := 63l4t832h74ep03jp0s08sj8dm
 
 # make username=mscott password=Password1! email=mscott@dispostable.com create_user
 create_user:
@@ -9,5 +9,5 @@ confirm_user:
 	aws cognito-idp confirm-sign-up --client-id $(client_id) --username $(username) --confirmation-code $(confirm)
 
 # login through hosted ui to get token:
-# https://williamalanmallet.auth.us-east-1.amazoncognito.com/oauth2/authorize?client_id=6joopnb17969k04b91vp8qbrfk&response_type=token&scope=openid&redirect_uri=https%3A%2F%2Fwilliamalanmallett.link
+# https://williamalanmallett.auth.us-east-1.amazoncognito.com/oauth2/authorize?client_id=63l4t832h74ep03jp0s08sj8dm&response_type=token&scope=openid&redirect_uri=https%3A%2F%2Fwilliamalanmallett.link
 

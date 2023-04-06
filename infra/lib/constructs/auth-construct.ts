@@ -25,7 +25,6 @@ export class AuthConstruct extends Construct {
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY
         });
 
-
         // Create the app client that will interact with this userpool
         this.userPoolClient = this.userPool.addClient('TradingCardClient', {
             authFlows: { userPassword: true },

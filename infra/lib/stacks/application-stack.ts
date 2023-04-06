@@ -9,8 +9,6 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import { ApplicationProtocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as Route53 from "aws-cdk-lib/aws-route53";
-import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
 import { AuthConstruct } from '../constructs/auth-construct';
 import { ApiGateway } from '../constructs/gateway';
 
