@@ -1,8 +1,9 @@
 import getPgClient from '../db-client.mjs';
 
-const validKeys = ['brand', 'cardNumber', 'lastName', 'firstName'];
+const validKeys = ['brand', 'userId', 'cardNumber', 'lastName', 'firstName'];
 const paramsToColumns = {
     brand: 'BRAND',
+    userId: 'USER_ID',
     cardNumber: 'CARD_NUMBER',
     lastName: 'LAST',
     firstName: 'FIRST'
@@ -20,7 +21,11 @@ const buildQueryParams = (query) => {
         if (i === 0) {
             queryString += ` WHERE ${paramsToColumns[key]} = :${key}`;
         } else {
-           queryString += ` AND ${paramsToColumns[key]} = :${key}`;
+            queryString += ` AND ${paramsToColumns[key]} = :${key}`;
+        }
+
+        if (key === 'userId') {
+            queryString += '::uuid';
         }
     });
 
@@ -41,6 +46,7 @@ const getCards = async (req, res) => {
 
     const queryValues = buildQueryValues(req.query);
     const client = getPgClient();
+
     let result = null;
 
     try {
