@@ -5,6 +5,7 @@ import { NetworkStack } from '../stacks/network-stack';
 import { DatabaseStack } from '../stacks/database-stack';
 import { ApplicationStack } from '../stacks/application-stack';
 
+
 export class ProductionStage extends cdk.Stage {
 
     constructor(scope: Construct, id: string, props?: cdk.StageProps) {
@@ -23,6 +24,7 @@ export class ProductionStage extends cdk.Stage {
         vpc: networkStack.vpc,
         certificate: networkStack.certificate,
         hostedZone: networkStack.hostedZone,
+        domainName: networkStack.domainName,
         databaseName: databaseStack.databaseName,
         dbSecret: databaseStack.dbSecret,
         clusterArn: databaseStack.clusterArn,

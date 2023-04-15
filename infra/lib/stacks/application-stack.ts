@@ -9,13 +9,15 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import { ApplicationProtocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as Route53 from "aws-cdk-lib/aws-route53";
-import * as Route53Targets from "aws-cdk-lib/aws-route53-targets";
+import { AuthConstruct } from '../constructs/auth-construct';
+import { ApiGateway } from '../constructs/gateway';
+
 
 interface ApplicationStackProps extends cdk.StackProps {
   vpc: ec2.Vpc,
   certificate: cdk.aws_certificatemanager.Certificate;
   hostedZone: route53.IHostedZone;
+  domainName: string;
   dbSecret: rds.DatabaseSecret;
   databaseName: string;
   clusterArn: string;
@@ -38,13 +40,18 @@ export class ApplicationStack extends cdk.Stack {
         vpc: props.vpc,
       });
   
-      const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
+      const albFargate = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'TradingCardServiceLbFargateService', {
         certificate: props.certificate,
         domainZone: props.hostedZone,
         protocol: ApplicationProtocol.HTTPS,
         cluster: ecsCluster,
         desiredCount: 2,
-        assignPublicIp: true,
+        assignPublicIp: false,
+        memoryLimitMiB: 1024,
+        cpu: 512,
+        healthCheckGracePeriod: cdk.Duration.seconds(60),
+        maxHealthyPercent: 200,
+        minHealthyPercent: 50,
         taskImageOptions: {
           image: ecs.ContainerImage.fromDockerImageAsset(dockerImage),
           containerPort: 3000,
@@ -60,19 +67,30 @@ export class ApplicationStack extends cdk.Stack {
           }
         },
         taskSubnets: {
-          subnetType: ec2.SubnetType.PUBLIC
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
         },
         loadBalancerName: 'trading-service-lb',
       });
 
-      this.taskRole = loadBalancedFargateService.taskDefinition.taskRole;
+      albFargate.targetGroup.configureHealthCheck({
+        enabled: true,
+        healthyThresholdCount: 3,
+        path: '/health',
+        interval: cdk.Duration.seconds(10),
+        healthyHttpCodes: '200'
+      });
+
+      this.taskRole = albFargate.taskDefinition.taskRole;
   
-      // Create ARecord that routes williamalanmallet.link to the load balancer
-      new Route53.ARecord(this, 'AliasRecord', {
-        zone: props.hostedZone,
-        target: Route53.RecordTarget.fromAlias(
-          new Route53Targets.LoadBalancerTarget(loadBalancedFargateService.loadBalancer),
-        ),
+      const auth = new AuthConstruct(this, 'TradingCardAuth');
+
+      new ApiGateway(this, 'TradingCardApiGateway', {
+        userPool: auth.userPool,
+        userPoolClient: auth.userPoolClient,
+        domainName: props.domainName,
+        certificate: props.certificate,
+        listener: albFargate.listener,
+        hostedZone: props.hostedZone,
       });
     }
 }

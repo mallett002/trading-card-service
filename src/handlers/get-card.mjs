@@ -3,7 +3,6 @@ import { selectCardById } from '../../queries.js';
 
 const getCard = async (req, res) => {
     const cardId = req.params.id;
-    
     const client = getPgClient();
 
     let result = null;
