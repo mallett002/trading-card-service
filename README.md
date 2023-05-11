@@ -1,5 +1,7 @@
 # trading-card-service
 
+![alt text](https://github.com/mallett002/trading-card-service/blob/main/trading-card-service.png?raw=true)
+
 #### Description
 This is a simple node api deployed to AWS Fargate
 
